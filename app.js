@@ -7,23 +7,22 @@ import {
     push,
     set,
     update,
-    remove
+    remove,
+    off
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// >>> HIER deine Firebase-Konfiguration eintragen (nicht löschen!) <<<
 const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "DEIN_PROJEKT.firebaseapp.com",
-    databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "DEIN_PROJEKT",
-    storageBucket: "DEIN_PROJEKT.appspot.com",
-    messagingSenderId: "DEINE_NUMMER",
-    appId: "DEINE_APP_ID"
+  apiKey: "AIzaSyBJxwo7GKgdHFVIM67FCEUxwC76qCSLhx8",
+  authDomain: "hofladen-9783a.firebaseapp.com",
+  databaseURL: "https://hofladen-9783a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hofladen-9783a",
+  storageBucket: "hofladen-9783a.firebasestorage.app",
+  messagingSenderId: "148532523053",
+  appId: "1:148532523053:web:9adf12982d6310702688a4"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
 // === PASSWORD ===
 // Standard: "verkauf2025" – siehe README zum Ändern
 const PASSWORD_HASH = "ca00b5919d1cd8047f33ca20505a441d8757faa7edcaa580e82836e41b8ad2fc";
