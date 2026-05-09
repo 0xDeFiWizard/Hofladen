@@ -1,4 +1,4 @@
-const CACHE_NAME = 'verkauf-v2';
+const CACHE_NAME = 'hofladen-v3';
 const STATIC_ASSETS = [
     './',
     './index.html',

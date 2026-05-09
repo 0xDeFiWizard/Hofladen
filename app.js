@@ -7,18 +7,18 @@ import {
     push,
     set,
     update,
-    remove,
-    off
+    remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+// >>> HIER deine Firebase-Konfiguration eintragen (nicht löschen!) <<<
 const firebaseConfig = {
-  apiKey: "AIzaSyBJxwo7GKgdHFVIM67FCEUxwC76qCSLhx8",
-  authDomain: "hofladen-9783a.firebaseapp.com",
-  databaseURL: "https://hofladen-9783a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "hofladen-9783a",
-  storageBucket: "hofladen-9783a.firebasestorage.app",
-  messagingSenderId: "148532523053",
-  appId: "1:148532523053:web:9adf12982d6310702688a4"
+    apiKey: "DEIN_API_KEY",
+    authDomain: "DEIN_PROJEKT.firebaseapp.com",
+    databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "DEIN_PROJEKT",
+    storageBucket: "DEIN_PROJEKT.appspot.com",
+    messagingSenderId: "DEINE_NUMMER",
+    appId: "DEINE_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -38,6 +38,7 @@ let currentEditingSaleId = null;
 let currentDebtCustomer = null;
 let selectedTierIndex = null;
 let currentStatsPeriod = 'today';
+let currentSubTab = 'all'; // 'all' oder 'debt' im Verkäufe-Tab
 
 // === HELPERS ===
 async function sha256(text) {
@@ -228,6 +229,10 @@ function renderAllSales() {
 
     let entries = Object.entries(sales)
         .sort((a, b) => b[1].timestamp - a[1].timestamp);
+
+    // Badge updaten: Anzahl aller Verkäufe
+    const allBadge = document.getElementById('allSalesBadge');
+    if (allBadge) allBadge.textContent = entries.length;
 
     if (search) {
         entries = entries.filter(([_, s]) =>
@@ -634,7 +639,12 @@ function renderDebts() {
         .sort((a, b) => b[1].total - a[1].total);
 
     const total = debtSales.reduce((sum, [_, s]) => sum + s.price, 0);
-    document.getElementById('debtTotalHeader').textContent = fmtMoney(total);
+    const totalEl = document.getElementById('debtTotalHeader');
+    if (totalEl) totalEl.textContent = fmtMoney(total);
+
+    // Sub-Tab Badge: Anzahl Personen mit Schulden
+    const debtBadge = document.getElementById('debtBadge');
+    if (debtBadge) debtBadge.textContent = customers.length;
 
     const list = document.getElementById('debtList');
     if (customers.length === 0) {
@@ -844,6 +854,15 @@ function setupNavigation() {
         });
     });
 
+    // Sub-Tabs (Verkäufe / Pumpliste)
+    document.querySelectorAll('.sub-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.subtab;
+            currentSubTab = target;
+            switchSubTab(target);
+        });
+    });
+
     // Period Tabs für Stats
     document.querySelectorAll('.period-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -854,6 +873,33 @@ function setupNavigation() {
         });
     });
 }
+
+function switchSubTab(target) {
+    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.sub-tab[data-subtab="${target}"]`)?.classList.add('active');
+
+    document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
+    if (target === 'all') {
+        document.getElementById('subViewAll').classList.add('active');
+    } else if (target === 'debt') {
+        document.getElementById('subViewDebt').classList.add('active');
+    }
+}
+
+// Direkt zu Pumpliste-Tab springen (von Übersicht aus)
+window.goToDebtTab = function() {
+    // 1. Verkäufe-View aktivieren
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('salesView').classList.add('active');
+
+    // 2. Bottom-Nav aktivieren
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('.nav-item[data-view="salesView"]')?.classList.add('active');
+
+    // 3. Pumpliste Sub-Tab öffnen
+    currentSubTab = 'debt';
+    switchSubTab('debt');
+};
 
 // === INIT ===
 document.addEventListener('DOMContentLoaded', async () => {

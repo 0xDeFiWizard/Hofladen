@@ -1,12 +1,12 @@
 {
-    "name": "Verkauf",
-    "short_name": "Verkauf",
-    "description": "Verkaufs- und Kundenverwaltung",
+    "name": "Hofladen",
+    "short_name": "Hofladen",
+    "description": "Verkaufs- und Bestandsverwaltung",
     "start_url": "./",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#ffffff",
-    "theme_color": "#10b981",
+    "theme_color": "#16a34a",
     "icons": [
         {
             "src": "icon-192.png",

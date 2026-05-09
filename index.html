@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#10b981">
+    <meta name="theme-color" content="#16a34a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Verkauf">
+    <meta name="apple-mobile-web-app-title" content="Hofladen">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <title>Verkauf</title>
+    <title>Hofladen</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,12 +18,36 @@
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
             <div class="login-logo">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                    <circle cx="24" cy="24" r="22" stroke="#10b981" stroke-width="2"/>
-                    <path d="M16 24L22 30L32 18" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Marktstand SVG -->
+                <svg width="64" height="64" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Dach Trapez -->
+                    <polygon points="35,75 165,75 175,100 25,100" fill="#8b4513"/>
+                    <!-- Streifen-Akzente -->
+                    <rect x="35" y="75" width="22" height="25" fill="#a0522d"/>
+                    <rect x="78" y="75" width="22" height="25" fill="#a0522d"/>
+                    <rect x="121" y="75" width="22" height="25" fill="#a0522d"/>
+                    <!-- Theke Hintergrund -->
+                    <rect x="40" y="100" width="120" height="50" fill="#d2a679"/>
+                    <!-- Theke obere Kante -->
+                    <rect x="40" y="100" width="120" height="6" fill="#a0522d"/>
+                    <!-- Produkte -->
+                    <rect x="46" y="113" width="20" height="13" rx="3" fill="#d97757"/>
+                    <circle cx="76" cy="120" r="6" fill="#7cb342"/>
+                    <circle cx="91" cy="120" r="6" fill="#7cb342"/>
+                    <circle cx="106" cy="120" r="6" fill="#fbc02d"/>
+                    <rect x="116" y="113" width="18" height="13" rx="2" fill="#c0392b"/>
+                    <rect x="139" y="113" width="20" height="13" rx="2" fill="#8b6914"/>
+                    <!-- Holzbrett -->
+                    <rect x="48" y="135" width="104" height="15" fill="#c19a6b"/>
+                    <line x1="48" y1="135" x2="152" y2="135" stroke="#8b6914" stroke-width="1.5"/>
+                    <!-- Theke untere Kante -->
+                    <rect x="38" y="150" width="124" height="5" fill="#6b3410"/>
+                    <!-- Pfosten -->
+                    <rect x="38" y="150" width="6" height="30" fill="#6b3410"/>
+                    <rect x="156" y="150" width="6" height="30" fill="#6b3410"/>
                 </svg>
             </div>
-            <h1 class="login-title">Verkauf</h1>
+            <h1 class="login-title">Hofladen</h1>
             <p class="login-subtitle">Bitte einloggen</p>
             <form id="loginForm" class="login-form">
                 <input type="password" id="passwordInput" class="login-input" placeholder="Passwort" autocomplete="current-password" required>
@@ -37,7 +61,27 @@
     <div id="mainApp" class="main-app hidden">
         <header class="header">
             <div class="header-content">
-                <h1 class="header-title">Verkauf</h1>
+                <div class="header-brand">
+                    <svg class="header-logo" width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <polygon points="35,75 165,75 175,100 25,100" fill="#8b4513"/>
+                        <rect x="35" y="75" width="22" height="25" fill="#a0522d"/>
+                        <rect x="78" y="75" width="22" height="25" fill="#a0522d"/>
+                        <rect x="121" y="75" width="22" height="25" fill="#a0522d"/>
+                        <rect x="40" y="100" width="120" height="50" fill="#d2a679"/>
+                        <rect x="40" y="100" width="120" height="6" fill="#a0522d"/>
+                        <rect x="46" y="113" width="20" height="13" rx="3" fill="#d97757"/>
+                        <circle cx="76" cy="120" r="6" fill="#7cb342"/>
+                        <circle cx="91" cy="120" r="6" fill="#7cb342"/>
+                        <circle cx="106" cy="120" r="6" fill="#fbc02d"/>
+                        <rect x="116" y="113" width="18" height="13" rx="2" fill="#c0392b"/>
+                        <rect x="139" y="113" width="20" height="13" rx="2" fill="#8b6914"/>
+                        <rect x="48" y="135" width="104" height="15" fill="#c19a6b"/>
+                        <rect x="38" y="150" width="124" height="5" fill="#6b3410"/>
+                        <rect x="38" y="150" width="6" height="30" fill="#6b3410"/>
+                        <rect x="156" y="150" width="6" height="30" fill="#6b3410"/>
+                    </svg>
+                    <h1 class="header-title">Hofladen</h1>
+                </div>
                 <button id="logoutBtn" class="logout-btn" aria-label="Abmelden">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -67,7 +111,7 @@
                         <div class="stat-value" id="monthRevenue">0,00 €</div>
                         <div class="stat-meta" id="monthCount">0 Verkäufe</div>
                     </div>
-                    <div class="stat-card stat-card-debt">
+                    <div class="stat-card stat-card-debt" onclick="goToDebtTab()">
                         <div class="stat-label">Offene Schulden</div>
                         <div class="stat-value" id="openDebt">0,00 €</div>
                         <div class="stat-meta" id="debtCount">0 Personen</div>
@@ -82,33 +126,47 @@
                 </div>
             </section>
 
-            <!-- SALES VIEW -->
+            <!-- SALES VIEW (mit Sub-Tabs Alle / Pumpliste) -->
             <section id="salesView" class="view">
                 <div class="section-header">
                     <h2 class="section-title">Verkäufe</h2>
                     <button class="btn-primary" onclick="openSaleModal()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-                        Neuer Verkauf
+                        Neu
                     </button>
                 </div>
-                <div class="filter-bar">
-                    <input type="text" id="salesSearch" class="search-input" placeholder="Suchen...">
-                </div>
-                <div id="allSalesList" class="sales-list">
-                    <div class="empty-state">Noch keine Verkäufe</div>
-                </div>
-            </section>
 
-            <!-- DEBT VIEW -->
-            <section id="debtView" class="view">
-                <div class="section-header">
-                    <h2 class="section-title">Pumpliste</h2>
-                    <div class="debt-summary">
-                        <span class="debt-total" id="debtTotalHeader">0,00 €</span>
+                <!-- Sub-Tabs: Alle / Pumpliste -->
+                <div class="sub-tabs">
+                    <button class="sub-tab active" data-subtab="all">
+                        <span class="sub-tab-label">Alle</span>
+                        <span class="sub-tab-badge" id="allSalesBadge">0</span>
+                    </button>
+                    <button class="sub-tab" data-subtab="debt">
+                        <span class="sub-tab-label">Pumpliste</span>
+                        <span class="sub-tab-badge sub-tab-badge-debt" id="debtBadge">0</span>
+                    </button>
+                </div>
+
+                <!-- ALLE Sales Sub-View -->
+                <div class="sub-view active" id="subViewAll">
+                    <div class="filter-bar">
+                        <input type="text" id="salesSearch" class="search-input" placeholder="Suchen...">
+                    </div>
+                    <div id="allSalesList" class="sales-list">
+                        <div class="empty-state">Noch keine Verkäufe</div>
                     </div>
                 </div>
-                <div id="debtList" class="debt-list">
-                    <div class="empty-state">Keine offenen Schulden</div>
+
+                <!-- PUMPLISTE Sub-View -->
+                <div class="sub-view" id="subViewDebt">
+                    <div class="debt-summary-bar">
+                        <span class="debt-summary-label">Offen gesamt</span>
+                        <span class="debt-total" id="debtTotalHeader">0,00 €</span>
+                    </div>
+                    <div id="debtList" class="debt-list">
+                        <div class="empty-state">Keine offenen Schulden</div>
+                    </div>
                 </div>
             </section>
 
@@ -176,7 +234,7 @@
             </section>
         </main>
 
-        <!-- BOTTOM NAVIGATION -->
+        <!-- BOTTOM NAVIGATION (4 Tabs + FAB) -->
         <nav class="bottom-nav">
             <button class="nav-item active" data-view="dashboardView">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -191,7 +249,7 @@
                 </svg>
                 <span>Verkäufe</span>
             </button>
-            <button class="nav-item nav-item-fab" onclick="openSaleModal()">
+            <button class="nav-item nav-item-fab" onclick="openSaleModal()" aria-label="Neuer Verkauf">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
@@ -233,7 +291,7 @@
                 <div class="form-group" id="tiersGroup">
                     <label>Schnell-Auswahl</label>
                     <div id="tierButtons" class="tier-buttons">
-                        <div class="tier-empty">Keine Stufen für dieses Produkt hinterlegt</div>
+                        <div class="tier-empty">Erst Produkt wählen</div>
                     </div>
                 </div>
 
