@@ -1,5 +1,4 @@
 // === FIREBASE CONFIG ===
-// HIER deine Firebase-Konfiguration einsetzen (siehe Anleitung in README.md)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
     getDatabase,
@@ -12,12 +11,6 @@ import {
     off
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBJxwo7GKgdHFVIM67FCEUxwC76qCSLhx8",
   authDomain: "hofladen-9783a.firebaseapp.com",
@@ -27,9 +20,6 @@ const firebaseConfig = {
   messagingSenderId: "148532523053",
   appId: "1:148532523053:web:9adf12982d6310702688a4"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
