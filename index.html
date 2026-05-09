@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Verkauf">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Verkauf</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-logo">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="24" r="22" stroke="#10b981" stroke-width="2"/>
+                    <path d="M16 24L22 30L32 18" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 class="login-title">Verkauf</h1>
+            <p class="login-subtitle">Bitte einloggen</p>
+            <form id="loginForm" class="login-form">
+                <input type="password" id="passwordInput" class="login-input" placeholder="Passwort" autocomplete="current-password" required>
+                <button type="submit" class="login-button">Anmelden</button>
+                <p id="loginError" class="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="mainApp" class="main-app hidden">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">Verkauf</h1>
+                <button id="logoutBtn" class="logout-btn" aria-label="Abmelden">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 17L21 12L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main class="main-content">
+
+            <!-- DASHBOARD VIEW -->
+            <section id="dashboardView" class="view active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Heute</div>
+                        <div class="stat-value" id="todayRevenue">0,00 €</div>
+                        <div class="stat-meta" id="todayCount">0 Verkäufe</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Diese Woche</div>
+                        <div class="stat-value" id="weekRevenue">0,00 €</div>
+                        <div class="stat-meta" id="weekCount">0 Verkäufe</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Diesen Monat</div>
+                        <div class="stat-value" id="monthRevenue">0,00 €</div>
+                        <div class="stat-meta" id="monthCount">0 Verkäufe</div>
+                    </div>
+                    <div class="stat-card stat-card-debt">
+                        <div class="stat-label">Offene Schulden</div>
+                        <div class="stat-value" id="openDebt">0,00 €</div>
+                        <div class="stat-meta" id="debtCount">0 Personen</div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2 class="section-title">Letzte Verkäufe</h2>
+                </div>
+                <div id="recentSalesList" class="sales-list">
+                    <div class="empty-state">Noch keine Verkäufe</div>
+                </div>
+            </section>
+
+            <!-- SALES VIEW -->
+            <section id="salesView" class="view">
+                <div class="section-header">
+                    <h2 class="section-title">Verkäufe</h2>
+                    <button class="btn-primary" onclick="openSaleModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                        Neuer Verkauf
+                    </button>
+                </div>
+                <div class="filter-bar">
+                    <input type="text" id="salesSearch" class="search-input" placeholder="Suchen...">
+                </div>
+                <div id="allSalesList" class="sales-list">
+                    <div class="empty-state">Noch keine Verkäufe</div>
+                </div>
+            </section>
+
+            <!-- DEBT VIEW -->
+            <section id="debtView" class="view">
+                <div class="section-header">
+                    <h2 class="section-title">Pumpliste</h2>
+                    <div class="debt-summary">
+                        <span class="debt-total" id="debtTotalHeader">0,00 €</span>
+                    </div>
+                </div>
+                <div id="debtList" class="debt-list">
+                    <div class="empty-state">Keine offenen Schulden</div>
+                </div>
+            </section>
+
+            <!-- PRODUCTS VIEW -->
+            <section id="productsView" class="view">
+                <div class="section-header">
+                    <h2 class="section-title">Produkte</h2>
+                    <button class="btn-primary" onclick="openProductModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                        Neu
+                    </button>
+                </div>
+                <div id="productsList" class="products-list">
+                    <div class="empty-state">Noch keine Produkte angelegt</div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="dashboardView">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9.55228 21 10 20.5523 10 20V16C10 15.4477 10.4477 15 11 15H13C13.5523 15 14 15.4477 14 16V20C14 20.5523 14.4477 21 15 21M9 21H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Übersicht</span>
+            </button>
+            <button class="nav-item" data-view="salesView">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 14L15 8M15 8H10M15 8V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>Verkäufe</span>
+            </button>
+            <button class="nav-item nav-item-fab" data-view="salesView" onclick="openSaleModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button class="nav-item" data-view="debtView">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Pump</span>
+            </button>
+            <button class="nav-item" data-view="productsView">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 7L12 3L4 7M20 7L12 11M20 7V17L12 21M12 11L4 7M12 11V21M4 7V17L12 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Produkte</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- SALE MODAL -->
+    <div id="saleModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeSaleModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="saleModalTitle">Neuer Verkauf</h3>
+                <button class="modal-close" onclick="closeSaleModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <form id="saleForm" class="modal-form">
+                <div class="form-group">
+                    <label>Produkt</label>
+                    <select id="saleProduct" required>
+                        <option value="">Produkt wählen...</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Menge (g)</label>
+                        <input type="number" id="saleAmount" step="0.1" min="0" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Preis (€)</label>
+                        <input type="number" id="salePrice" step="0.01" min="0" required placeholder="0,00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Kunde</label>
+                    <input type="text" id="saleCustomer" required placeholder="Name eingeben" list="customersList">
+                    <datalist id="customersList"></datalist>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="saleOnDebt">
+                        <span class="checkbox-custom"></span>
+                        Auf Pump (noch nicht bezahlt)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Notiz (optional)</label>
+                    <input type="text" id="saleNote" placeholder="...">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeSaleModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PRODUCT MODAL -->
+    <div id="productModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeProductModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Neues Produkt</h3>
+                <button class="modal-close" onclick="closeProductModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <form id="productForm" class="modal-form">
+                <div class="form-group">
+                    <label>Sorte</label>
+                    <input type="text" id="productName" required placeholder="z.B. Sorte A">
+                </div>
+                <div class="form-group">
+                    <label>Bestand (g)</label>
+                    <input type="number" id="productWeight" step="0.1" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Preis pro Gramm (optional)</label>
+                    <input type="number" id="productPrice" step="0.01" min="0" placeholder="0,00">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-danger hidden" id="deleteProductBtn">Löschen</button>
+                    <button type="button" class="btn-secondary" onclick="closeProductModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DEBT PAYMENT MODAL -->
+    <div id="debtModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeDebtModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Schulden verwalten</h3>
+                <button class="modal-close" onclick="closeDebtModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="modal-form">
+                <div class="debt-customer-info">
+                    <div class="debt-customer-name" id="debtCustomerName"></div>
+                    <div class="debt-customer-total" id="debtCustomerTotal"></div>
+                </div>
+                <div id="debtCustomerSales" class="debt-sales-list"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeDebtModal()">Schließen</button>
+                    <button type="button" class="btn-primary" onclick="markAllPaid()">Alles als bezahlt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Firebase -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
