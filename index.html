@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#10b981">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Verkauf">
@@ -34,7 +35,6 @@
 
     <!-- MAIN APP -->
     <div id="mainApp" class="main-app hidden">
-        <!-- HEADER -->
         <header class="header">
             <div class="header-content">
                 <h1 class="header-title">Verkauf</h1>
@@ -48,9 +48,7 @@
             </div>
         </header>
 
-        <!-- CONTENT AREA -->
         <main class="main-content">
-
             <!-- DASHBOARD VIEW -->
             <section id="dashboardView" class="view active">
                 <div class="stats-grid">
@@ -114,6 +112,55 @@
                 </div>
             </section>
 
+            <!-- STATS VIEW -->
+            <section id="statsView" class="view">
+                <div class="section-header">
+                    <h2 class="section-title">Statistik</h2>
+                </div>
+
+                <div class="period-tabs">
+                    <button class="period-tab active" data-period="today">Heute</button>
+                    <button class="period-tab" data-period="week">Woche</button>
+                    <button class="period-tab" data-period="month">Monat</button>
+                    <button class="period-tab" data-period="all">Gesamt</button>
+                </div>
+
+                <div class="profit-grid">
+                    <div class="profit-card profit-card-revenue">
+                        <div class="profit-label">Umsatz</div>
+                        <div class="profit-value" id="statRevenue">0,00 €</div>
+                    </div>
+                    <div class="profit-card profit-card-cost">
+                        <div class="profit-label">Wareneinsatz</div>
+                        <div class="profit-value" id="statCost">0,00 €</div>
+                    </div>
+                    <div class="profit-card profit-card-profit">
+                        <div class="profit-label">Gewinn</div>
+                        <div class="profit-value" id="statProfit">0,00 €</div>
+                        <div class="profit-meta" id="statMargin">Marge: 0%</div>
+                    </div>
+                    <div class="profit-card">
+                        <div class="profit-label">Verkäufe</div>
+                        <div class="profit-value" id="statCount">0</div>
+                        <div class="profit-meta" id="statAvg">Ø 0,00 €</div>
+                    </div>
+                </div>
+
+                <div class="section-subheader">
+                    <h3 class="section-subtitle">Top Produkte</h3>
+                </div>
+                <div id="topProductsList" class="ranking-list">
+                    <div class="empty-state">Keine Daten</div>
+                </div>
+
+                <div class="section-subheader">
+                    <h3 class="section-subtitle">Top Kunden</h3>
+                </div>
+                <div id="topCustomersList" class="ranking-list">
+                    <div class="empty-state">Keine Daten</div>
+                </div>
+            </section>
+
             <!-- PRODUCTS VIEW -->
             <section id="productsView" class="view">
                 <div class="section-header">
@@ -127,7 +174,6 @@
                     <div class="empty-state">Noch keine Produkte angelegt</div>
                 </div>
             </section>
-
         </main>
 
         <!-- BOTTOM NAVIGATION -->
@@ -145,16 +191,17 @@
                 </svg>
                 <span>Verkäufe</span>
             </button>
-            <button class="nav-item nav-item-fab" data-view="salesView" onclick="openSaleModal()">
+            <button class="nav-item nav-item-fab" onclick="openSaleModal()">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
             </button>
-            <button class="nav-item" data-view="debtView">
+            <button class="nav-item" data-view="statsView">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M3 3V21H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 16L11 12L14 15L20 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span>Pump</span>
+                <span>Statistik</span>
             </button>
             <button class="nav-item" data-view="productsView">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -182,6 +229,14 @@
                         <option value="">Produkt wählen...</option>
                     </select>
                 </div>
+
+                <div class="form-group" id="tiersGroup">
+                    <label>Schnell-Auswahl</label>
+                    <div id="tierButtons" class="tier-buttons">
+                        <div class="tier-empty">Keine Stufen für dieses Produkt hinterlegt</div>
+                    </div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>Menge (g)</label>
@@ -209,6 +264,7 @@
                     <input type="text" id="saleNote" placeholder="...">
                 </div>
                 <div class="modal-actions">
+                    <button type="button" class="btn-danger hidden" id="deleteSaleBtn">Löschen</button>
                     <button type="button" class="btn-secondary" onclick="closeSaleModal()">Abbrechen</button>
                     <button type="submit" class="btn-primary">Speichern</button>
                 </div>
@@ -231,14 +287,26 @@
                     <label>Sorte</label>
                     <input type="text" id="productName" required placeholder="z.B. Sorte A">
                 </div>
-                <div class="form-group">
-                    <label>Bestand (g)</label>
-                    <input type="number" id="productWeight" step="0.1" min="0" required placeholder="0">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bestand (g)</label>
+                        <input type="number" id="productWeight" step="0.1" min="0" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>EK pro g (€)</label>
+                        <input type="number" id="productCostPrice" step="0.01" min="0" placeholder="0,00">
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label>Preis pro Gramm (optional)</label>
-                    <input type="number" id="productPrice" step="0.01" min="0" placeholder="0,00">
+                    <div class="tiers-header">
+                        <label>Verkaufspreis-Stufen</label>
+                        <button type="button" class="btn-mini" id="addTierBtn">+ Stufe</button>
+                    </div>
+                    <div id="tiersList" class="tiers-edit-list"></div>
+                    <p class="form-hint">Mehrere VK-Preise möglich (z.B. 1g=15€, 5g=60€). Beim Verkauf einfach antippen.</p>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-danger hidden" id="deleteProductBtn">Löschen</button>
                     <button type="button" class="btn-secondary" onclick="closeProductModal()">Abbrechen</button>
@@ -275,7 +343,6 @@
     <!-- TOAST -->
     <div id="toast" class="toast hidden"></div>
 
-    <!-- Firebase -->
     <script type="module" src="app.js"></script>
 </body>
 </html>

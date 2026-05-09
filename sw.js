@@ -1,4 +1,4 @@
-const CACHE_NAME = 'verkauf-v1';
+const CACHE_NAME = 'verkauf-v2';
 const STATIC_ASSETS = [
     './',
     './index.html',
