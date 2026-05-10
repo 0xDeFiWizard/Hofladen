@@ -281,30 +281,22 @@
                 </button>
             </div>
             <form id="saleForm" class="modal-form">
+
+                <!-- POSITIONEN (1 oder mehrere Sorten) -->
                 <div class="form-group">
-                    <label>Produkt</label>
-                    <select id="saleProduct" required>
-                        <option value="">Produkt wählen...</option>
-                    </select>
+                    <div class="positions-header">
+                        <label>Positionen</label>
+                        <button type="button" class="btn-mini" id="addPositionBtn">+ Sorte</button>
+                    </div>
+                    <div id="positionsList" class="positions-list"></div>
                 </div>
 
-                <div class="form-group" id="tiersGroup">
-                    <label>Schnell-Auswahl</label>
-                    <div id="tierButtons" class="tier-buttons">
-                        <div class="tier-empty">Erst Produkt wählen</div>
-                    </div>
+                <!-- GESAMTSUMME -->
+                <div class="sale-total">
+                    <span class="sale-total-label">Gesamt</span>
+                    <span class="sale-total-value" id="saleTotalValue">0,00 €</span>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Menge (g)</label>
-                        <input type="number" id="saleAmount" step="0.1" min="0" required placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Preis (€)</label>
-                        <input type="number" id="salePrice" step="0.01" min="0" required placeholder="0,00">
-                    </div>
-                </div>
                 <div class="form-group">
                     <label>Kunde</label>
                     <input type="text" id="saleCustomer" required placeholder="Name eingeben" list="customersList">

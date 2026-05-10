@@ -814,6 +814,221 @@ input, select, textarea {
     font-weight: 600;
 }
 
+/* === MULTI-POSITION SALE === */
+.positions-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.positions-header label {
+    margin-bottom: 0;
+}
+
+.positions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.position-card {
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.position-card:focus-within {
+    border-color: var(--green-500);
+    background: var(--white);
+}
+
+.position-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.position-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--green-100);
+    color: var(--green-700);
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.position-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.position-remove-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gray-400);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.position-remove-btn:hover {
+    background: var(--red-50);
+    color: var(--red-500);
+}
+
+.position-product-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.position-product-select:focus {
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px var(--green-100);
+}
+
+.position-tier-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.position-tier-btn {
+    padding: 7px 11px;
+    background: var(--green-50);
+    color: var(--green-700);
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    min-width: 60px;
+    line-height: 1.2;
+}
+
+.position-tier-btn:hover { background: var(--green-100); }
+
+.position-tier-btn.selected {
+    background: var(--green-600);
+    color: white;
+    border-color: var(--green-700);
+}
+
+.position-tier-btn-amount {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.position-tier-btn-price {
+    font-size: 10px;
+    opacity: 0.85;
+    font-variant-numeric: tabular-nums;
+}
+
+.position-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.position-fields input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.position-fields input:focus { border-color: var(--green-500); }
+
+.position-field-label {
+    font-size: 11px;
+    color: var(--gray-500);
+    font-weight: 500;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.position-field {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Gesamtsumme */
+.sale-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, var(--green-50) 0%, var(--green-100) 100%);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--green-200);
+}
+
+.sale-total-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-700);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sale-total-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green-700);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Multi-Verkauf in der Liste */
+.sale-multi-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    background: var(--green-100);
+    color: var(--green-700);
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-left: 4px;
+}
+
 /* === TIER BUTTONS === */
 .tier-buttons {
     display: flex;

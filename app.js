@@ -7,22 +7,23 @@ import {
     push,
     set,
     update,
-    remove,
-    off
+    remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+// >>> HIER deine Firebase-Konfiguration eintragen (nicht löschen!) <<<
 const firebaseConfig = {
-  apiKey: "AIzaSyBJxwo7GKgdHFVIM67FCEUxwC76qCSLhx8",
-  authDomain: "hofladen-9783a.firebaseapp.com",
-  databaseURL: "https://hofladen-9783a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "hofladen-9783a",
-  storageBucket: "hofladen-9783a.firebasestorage.app",
-  messagingSenderId: "148532523053",
-  appId: "1:148532523053:web:9adf12982d6310702688a4"
+    apiKey: "DEIN_API_KEY",
+    authDomain: "DEIN_PROJEKT.firebaseapp.com",
+    databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "DEIN_PROJEKT",
+    storageBucket: "DEIN_PROJEKT.appspot.com",
+    messagingSenderId: "DEINE_NUMMER",
+    appId: "DEINE_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
 // === PASSWORD ===
 // Standard: "verkauf2025" – siehe README zum Ändern
 const PASSWORD_HASH = "ca00b5919d1cd8047f33ca20505a441d8757faa7edcaa580e82836e41b8ad2fc";
@@ -35,9 +36,10 @@ let sales = {};
 let currentEditingProductId = null;
 let currentEditingSaleId = null;
 let currentDebtCustomer = null;
-let selectedTierIndex = null;
 let currentStatsPeriod = 'today';
-let currentSubTab = 'all'; // 'all' oder 'debt' im Verkäufe-Tab
+let currentSubTab = 'all';
+// Aktuell im Modal bearbeitete Positionen: [{productId, amount, price, selectedTierIdx}, ...]
+let currentPositions = [];
 
 // === HELPERS ===
 async function sha256(text) {
@@ -143,7 +145,10 @@ function initApp() {
     onValue(ref(db, 'products'), (snapshot) => {
         products = snapshot.val() || {};
         renderProducts();
-        renderProductSelect();
+        // Falls Sale-Modal offen: Positionen neu rendern, damit neue Produkte erscheinen
+        if (!document.getElementById('saleModal').classList.contains('hidden')) {
+            renderPositions();
+        }
     });
 
     onValue(ref(db, 'sales'), (snapshot) => {
@@ -204,15 +209,34 @@ function renderSaleItem(id, sale) {
     const debtBadge = sale.onDebt && !sale.paid ? '<span class="sale-debt-badge">Pump</span>' : '';
     const debtClass = sale.onDebt && !sale.paid ? 'is-debt' : '';
     const note = sale.note ? ' · ' + escapeHtml(sale.note) : '';
+
+    // Multi-Position oder Single-Position?
+    let productLabel = '';
+    let totalAmount = 0;
+    if (sale.items && sale.items.length > 0) {
+        // Multi-Position
+        const firstName = sale.items[0].productName || '?';
+        const moreCount = sale.items.length - 1;
+        productLabel = escapeHtml(firstName);
+        if (moreCount > 0) {
+            productLabel += ` <span class="sale-multi-badge">+${moreCount}</span>`;
+        }
+        totalAmount = sale.items.reduce((sum, it) => sum + (it.amount || 0), 0);
+    } else {
+        // Single-Position (Legacy)
+        productLabel = escapeHtml(sale.productName || '?');
+        totalAmount = sale.amount || 0;
+    }
+
     return `
         <div class="sale-item ${debtClass}" onclick="editSale('${id}')">
             <div class="sale-info">
                 <div class="sale-customer">${escapeHtml(sale.customer)} ${debtBadge}</div>
-                <div class="sale-meta">${escapeHtml(sale.productName || '?')} · ${fmtDate(sale.timestamp)}${note}</div>
+                <div class="sale-meta">${productLabel} · ${fmtDate(sale.timestamp)}${note}</div>
             </div>
             <div class="sale-amounts">
                 <div class="sale-price">${fmtMoney(sale.price)}</div>
-                <div class="sale-weight">${fmtWeight(sale.amount)}</div>
+                <div class="sale-weight">${fmtWeight(totalAmount)}</div>
             </div>
             <svg class="sale-edit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -234,11 +258,16 @@ function renderAllSales() {
     if (allBadge) allBadge.textContent = entries.length;
 
     if (search) {
-        entries = entries.filter(([_, s]) =>
-            (s.customer || '').toLowerCase().includes(search) ||
-            (s.productName || '').toLowerCase().includes(search) ||
-            (s.note || '').toLowerCase().includes(search)
-        );
+        entries = entries.filter(([_, s]) => {
+            const customerMatch = (s.customer || '').toLowerCase().includes(search);
+            const noteMatch = (s.note || '').toLowerCase().includes(search);
+            // Single oder Multi
+            let productMatch = (s.productName || '').toLowerCase().includes(search);
+            if (!productMatch && s.items) {
+                productMatch = s.items.some(it => (it.productName || '').toLowerCase().includes(search));
+            }
+            return customerMatch || noteMatch || productMatch;
+        });
     }
 
     if (entries.length === 0) {
@@ -286,21 +315,146 @@ function renderProducts() {
     }).join('');
 }
 
-function renderProductSelect() {
-    const select = document.getElementById('saleProduct');
-    const current = select.value;
-    const entries = Object.entries(products).sort((a, b) =>
-        (a[1].name || '').localeCompare(b[1].name || '')
-    );
+// === POSITION RENDERING (Multi-Sorten im Sale-Modal) ===
+function renderPositions() {
+    const list = document.getElementById('positionsList');
+    if (currentPositions.length === 0) {
+        // Mindestens eine Position immer anzeigen
+        currentPositions.push({ productId: '', amount: '', price: '', selectedTierIdx: null });
+    }
 
-    select.innerHTML = '<option value="">Produkt wählen...</option>' +
-        entries.map(([id, p]) =>
-            `<option value="${id}">${escapeHtml(p.name)} (${fmtWeight(p.weight)})</option>`
-        ).join('');
+    list.innerHTML = currentPositions.map((pos, idx) => renderPositionCard(pos, idx)).join('');
 
-    if (current) select.value = current;
+    // Event-Listener anbringen
+    currentPositions.forEach((_, idx) => {
+        const card = document.querySelector(`.position-card[data-idx="${idx}"]`);
+        if (!card) return;
+
+        // Produkt-Select
+        const select = card.querySelector('.position-product-select');
+        select?.addEventListener('change', (e) => {
+            currentPositions[idx].productId = e.target.value;
+            currentPositions[idx].selectedTierIdx = null;
+            renderPositions();
+        });
+
+        // Tier-Buttons
+        card.querySelectorAll('.position-tier-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amount = parseFloat(btn.dataset.amount);
+                const price = parseFloat(btn.dataset.price);
+                const tierIdx = parseInt(btn.dataset.tierIdx);
+                currentPositions[idx].amount = amount;
+                currentPositions[idx].price = price.toFixed(2);
+                currentPositions[idx].selectedTierIdx = tierIdx;
+                renderPositions();
+            });
+        });
+
+        // Manuelle Eingaben
+        const amountInput = card.querySelector('.position-amount-input');
+        const priceInput = card.querySelector('.position-price-input');
+        amountInput?.addEventListener('input', (e) => {
+            currentPositions[idx].amount = e.target.value;
+            currentPositions[idx].selectedTierIdx = null;
+            updateSaleTotal();
+            // Tier-Highlighting weg
+            card.querySelectorAll('.position-tier-btn').forEach(b => b.classList.remove('selected'));
+        });
+        priceInput?.addEventListener('input', (e) => {
+            currentPositions[idx].price = e.target.value;
+            currentPositions[idx].selectedTierIdx = null;
+            updateSaleTotal();
+            card.querySelectorAll('.position-tier-btn').forEach(b => b.classList.remove('selected'));
+        });
+
+        // Entfernen-Button
+        const removeBtn = card.querySelector('.position-remove-btn');
+        removeBtn?.addEventListener('click', () => {
+            currentPositions.splice(idx, 1);
+            if (currentPositions.length === 0) {
+                currentPositions.push({ productId: '', amount: '', price: '', selectedTierIdx: null });
+            }
+            renderPositions();
+        });
+    });
+
+    updateSaleTotal();
 }
 
+function renderPositionCard(pos, idx) {
+    const product = pos.productId ? products[pos.productId] : null;
+    const productOptions = Object.entries(products)
+        .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || ''))
+        .map(([pid, p]) =>
+            `<option value="${pid}" ${pid === pos.productId ? 'selected' : ''}>${escapeHtml(p.name)} (${fmtWeight(p.weight)})</option>`
+        ).join('');
+
+    // Tier-Buttons
+    let tierHtml = '';
+    if (product && product.tiers && product.tiers.length > 0) {
+        const tiers = [...product.tiers].sort((a, b) => (a.amount || 0) - (b.amount || 0));
+        tierHtml = `
+            <div class="position-tier-buttons">
+                ${tiers.map((tier, tIdx) => `
+                    <button type="button" class="position-tier-btn ${pos.selectedTierIdx === tIdx ? 'selected' : ''}"
+                            data-tier-idx="${tIdx}"
+                            data-amount="${tier.amount}"
+                            data-price="${tier.price}">
+                        <span class="position-tier-btn-amount">${fmtWeight(tier.amount)}</span>
+                        <span class="position-tier-btn-price">${fmtMoney(tier.price)}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    const showRemove = currentPositions.length > 1;
+
+    return `
+        <div class="position-card" data-idx="${idx}">
+            <div class="position-card-header">
+                <div class="position-card-title">
+                    <span class="position-number">${idx + 1}</span>
+                    <span>Position</span>
+                </div>
+                ${showRemove ? `
+                    <button type="button" class="position-remove-btn" aria-label="Position entfernen">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                ` : ''}
+            </div>
+            <select class="position-product-select" required>
+                <option value="">Produkt wählen...</option>
+                ${productOptions}
+            </select>
+            ${tierHtml}
+            <div class="position-fields">
+                <div class="position-field">
+                    <span class="position-field-label">Menge (g)</span>
+                    <input type="number" class="position-amount-input" step="0.1" min="0" placeholder="0" value="${pos.amount !== '' && pos.amount != null ? pos.amount : ''}">
+                </div>
+                <div class="position-field">
+                    <span class="position-field-label">Preis (€)</span>
+                    <input type="number" class="position-price-input" step="0.01" min="0" placeholder="0,00" value="${pos.price !== '' && pos.price != null ? pos.price : ''}">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateSaleTotal() {
+    const total = currentPositions.reduce((sum, pos) => {
+        const p = parseFloat(pos.price);
+        return sum + (isNaN(p) ? 0 : p);
+    }, 0);
+    const el = document.getElementById('saleTotalValue');
+    if (el) el.textContent = fmtMoney(total);
+}
+
+// === CUSTOMERS LIST ===
 function renderCustomersList() {
     const datalist = document.getElementById('customersList');
     const customers = [...new Set(Object.values(sales).map(s => s.customer).filter(Boolean))]
@@ -308,49 +462,15 @@ function renderCustomersList() {
     datalist.innerHTML = customers.map(c => `<option value="${escapeHtml(c)}">`).join('');
 }
 
-// === TIER BUTTONS im Sale-Modal ===
-function renderTierButtons(productId) {
-    const container = document.getElementById('tierButtons');
-    const product = products[productId];
-    selectedTierIndex = null;
-
-    if (!product || !product.tiers || product.tiers.length === 0) {
-        container.innerHTML = '<div class="tier-empty">Keine Stufen für dieses Produkt hinterlegt</div>';
-        return;
-    }
-
-    // Stufen nach Menge sortiert
-    const tiers = [...product.tiers].sort((a, b) => (a.amount || 0) - (b.amount || 0));
-
-    container.innerHTML = tiers.map((tier, idx) => `
-        <button type="button" class="tier-button" data-idx="${idx}" data-amount="${tier.amount}" data-price="${tier.price}">
-            <span class="tier-button-amount">${fmtWeight(tier.amount)}</span>
-            <span class="tier-button-price">${fmtMoney(tier.price)}</span>
-        </button>
-    `).join('');
-
-    // Click-Handler
-    container.querySelectorAll('.tier-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            container.querySelectorAll('.tier-button').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            document.getElementById('saleAmount').value = btn.dataset.amount;
-            document.getElementById('salePrice').value = parseFloat(btn.dataset.price).toFixed(2);
-            selectedTierIndex = parseInt(btn.dataset.idx);
-        });
-    });
-}
-
 // === SALE MODAL ===
 window.openSaleModal = function() {
     currentEditingSaleId = null;
-    selectedTierIndex = null;
+    currentPositions = [{ productId: '', amount: '', price: '', selectedTierIdx: null }];
     document.getElementById('saleModalTitle').textContent = 'Neuer Verkauf';
     document.getElementById('saleForm').reset();
     document.getElementById('deleteSaleBtn').classList.add('hidden');
-    document.getElementById('tierButtons').innerHTML = '<div class="tier-empty">Erst Produkt wählen</div>';
+    renderPositions();
     document.getElementById('saleModal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('saleProduct').focus(), 100);
 };
 
 window.editSale = function(id) {
@@ -358,20 +478,32 @@ window.editSale = function(id) {
     if (!sale) return;
 
     currentEditingSaleId = id;
-    selectedTierIndex = null;
     document.getElementById('saleModalTitle').textContent = 'Verkauf bearbeiten';
 
-    // Felder befüllen
-    document.getElementById('saleProduct').value = sale.productId || '';
-    document.getElementById('saleAmount').value = sale.amount || '';
-    document.getElementById('salePrice').value = (sale.price || 0).toFixed(2);
+    // Positionen aus dem Verkauf laden
+    if (sale.items && sale.items.length > 0) {
+        // Multi-Position-Verkauf
+        currentPositions = sale.items.map(it => ({
+            productId: it.productId || '',
+            amount: it.amount || '',
+            price: (it.price || 0).toFixed(2),
+            selectedTierIdx: null
+        }));
+    } else {
+        // Single-Position (Legacy)
+        currentPositions = [{
+            productId: sale.productId || '',
+            amount: sale.amount || '',
+            price: (sale.price || 0).toFixed(2),
+            selectedTierIdx: null
+        }];
+    }
+
     document.getElementById('saleCustomer').value = sale.customer || '';
     document.getElementById('saleOnDebt').checked = !!(sale.onDebt && !sale.paid);
     document.getElementById('saleNote').value = sale.note || '';
 
-    // Tiers anzeigen
-    if (sale.productId) renderTierButtons(sale.productId);
-
+    renderPositions();
     document.getElementById('deleteSaleBtn').classList.remove('hidden');
     document.getElementById('saleModal').classList.remove('hidden');
 };
@@ -379,89 +511,148 @@ window.editSale = function(id) {
 window.closeSaleModal = function() {
     document.getElementById('saleModal').classList.add('hidden');
     currentEditingSaleId = null;
+    currentPositions = [];
 };
+
+function addPosition() {
+    currentPositions.push({ productId: '', amount: '', price: '', selectedTierIdx: null });
+    renderPositions();
+    // Smooth-Scroll zur neuen Position
+    setTimeout(() => {
+        const list = document.getElementById('positionsList');
+        const newCard = list?.lastElementChild;
+        newCard?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        newCard?.querySelector('.position-product-select')?.focus();
+    }, 50);
+}
+
+// Hilfsfunktion: Bestand pro Produkt aus Items berechnen
+function aggregateAmountsByProduct(items) {
+    const map = {};
+    items.forEach(it => {
+        if (!it.productId) return;
+        if (!map[it.productId]) map[it.productId] = 0;
+        map[it.productId] += it.amount || 0;
+    });
+    return map;
+}
 
 async function handleSaleSubmit(e) {
     e.preventDefault();
-    const productId = document.getElementById('saleProduct').value;
-    const product = products[productId];
-    const amount = parseFloat(document.getElementById('saleAmount').value);
-    const price = parseFloat(document.getElementById('salePrice').value);
+
     const customer = document.getElementById('saleCustomer').value.trim();
     const onDebt = document.getElementById('saleOnDebt').checked;
     const note = document.getElementById('saleNote').value.trim();
 
-    if (!product || !customer || isNaN(amount) || amount <= 0 || isNaN(price) || price < 0) {
-        showToast('Bitte alle Felder ausfüllen', 'error');
+    // Validierung der Positionen
+    const validItems = [];
+    for (const pos of currentPositions) {
+        if (!pos.productId) continue;
+        const product = products[pos.productId];
+        if (!product) continue;
+        const amount = parseFloat(pos.amount);
+        const price = parseFloat(pos.price);
+        if (isNaN(amount) || amount <= 0 || isNaN(price) || price < 0) continue;
+        validItems.push({
+            productId: pos.productId,
+            productName: product.name,
+            amount,
+            price,
+            costPerGram: product.costPerGram || 0
+        });
+    }
+
+    if (validItems.length === 0) {
+        showToast('Bitte mindestens eine Position vollständig ausfüllen', 'error');
+        return;
+    }
+    if (!customer) {
+        showToast('Bitte Kundenname eintragen', 'error');
         return;
     }
 
+    const totalPrice = validItems.reduce((sum, it) => sum + it.price, 0);
+    const totalAmount = validItems.reduce((sum, it) => sum + it.amount, 0);
+
     try {
         if (currentEditingSaleId) {
-            // BEARBEITEN: alte Werte zurückrechnen, neue anwenden
+            // BEARBEITEN
             const oldSale = sales[currentEditingSaleId];
 
-            // Bestand korrigieren (alten zurück, neuen abziehen)
-            // Falls Produkt gewechselt wurde: zwei Produkte updaten
-            const oldProductId = oldSale.productId;
-            const newProductId = productId;
-
-            if (oldProductId === newProductId && products[oldProductId]) {
-                const diff = amount - (oldSale.amount || 0);
-                const newWeight = Math.max(0, (products[oldProductId].weight || 0) - diff);
-                await update(ref(db, 'products/' + oldProductId), { weight: newWeight });
-            } else {
-                // Altes Produkt: Bestand zurückgeben
-                if (oldProductId && products[oldProductId]) {
-                    const oldRestored = (products[oldProductId].weight || 0) + (oldSale.amount || 0);
-                    await update(ref(db, 'products/' + oldProductId), { weight: oldRestored });
-                }
-                // Neues Produkt: Menge abziehen
-                if (products[newProductId]) {
-                    const newReduced = Math.max(0, (products[newProductId].weight || 0) - amount);
-                    await update(ref(db, 'products/' + newProductId), { weight: newReduced });
-                }
+            // Alte Mengen pro Produkt zurückrechnen
+            const oldByProduct = {};
+            if (oldSale.items && oldSale.items.length > 0) {
+                oldSale.items.forEach(it => {
+                    if (!it.productId) return;
+                    oldByProduct[it.productId] = (oldByProduct[it.productId] || 0) + (it.amount || 0);
+                });
+            } else if (oldSale.productId) {
+                oldByProduct[oldSale.productId] = oldSale.amount || 0;
             }
 
-            // Wenn vorher Pump und jetzt nicht mehr: paidAt setzen
+            // Neue Mengen
+            const newByProduct = aggregateAmountsByProduct(validItems);
+
+            // Diff berechnen und Bestände updaten
+            const allProductIds = new Set([...Object.keys(oldByProduct), ...Object.keys(newByProduct)]);
+            const updates = {};
+            allProductIds.forEach(pid => {
+                if (!products[pid]) return;
+                const oldQty = oldByProduct[pid] || 0;
+                const newQty = newByProduct[pid] || 0;
+                const diff = newQty - oldQty;
+                const currentWeight = products[pid].weight || 0;
+                const newWeight = Math.max(0, currentWeight - diff);
+                updates['products/' + pid + '/weight'] = newWeight;
+            });
+
+            // Verkaufs-Objekt aufbauen (Multi-Format)
             const wasPaidNow = oldSale.onDebt && !oldSale.paid && !onDebt;
             const updatedSale = {
-                productId,
-                productName: product.name,
-                amount,
-                price,
+                items: validItems,
+                price: totalPrice,
                 customer,
                 onDebt,
                 paid: onDebt ? (oldSale.paid || false) : true,
                 note: note || null,
-                timestamp: oldSale.timestamp,
-                costPerGram: product.costPerGram || 0
+                timestamp: oldSale.timestamp
             };
             if (wasPaidNow) updatedSale.paidAt = Date.now();
             else if (oldSale.paidAt) updatedSale.paidAt = oldSale.paidAt;
 
+            // Set + Bestands-Updates
             await set(ref(db, 'sales/' + currentEditingSaleId), updatedSale);
+            if (Object.keys(updates).length > 0) {
+                await update(ref(db), updates);
+            }
+
             showToast('Verkauf aktualisiert');
         } else {
-            // NEU: anlegen
-            const sale = {
-                productId,
-                productName: product.name,
-                amount,
-                price,
+            // NEU anlegen
+            const newSale = {
+                items: validItems,
+                price: totalPrice,
                 customer,
                 onDebt,
                 paid: !onDebt,
                 note: note || null,
-                timestamp: Date.now(),
-                costPerGram: product.costPerGram || 0
+                timestamp: Date.now()
             };
-            const newSaleRef = push(ref(db, 'sales'));
-            await set(newSaleRef, sale);
 
-            // Bestand reduzieren
-            const newWeight = Math.max(0, (product.weight || 0) - amount);
-            await update(ref(db, 'products/' + productId), { weight: newWeight });
+            const newSaleRef = push(ref(db, 'sales'));
+            await set(newSaleRef, newSale);
+
+            // Bestände reduzieren
+            const byProduct = aggregateAmountsByProduct(validItems);
+            const updates = {};
+            Object.entries(byProduct).forEach(([pid, qty]) => {
+                if (!products[pid]) return;
+                const newWeight = Math.max(0, (products[pid].weight || 0) - qty);
+                updates['products/' + pid + '/weight'] = newWeight;
+            });
+            if (Object.keys(updates).length > 0) {
+                await update(ref(db), updates);
+            }
 
             showToast(onDebt ? 'Auf Pump notiert' : 'Verkauf gespeichert');
         }
@@ -478,26 +669,34 @@ async function handleDeleteSale() {
     if (!confirm('Diesen Verkauf wirklich löschen?')) return;
     try {
         const sale = sales[currentEditingSaleId];
-        if (sale && sale.productId && products[sale.productId]) {
-            const product = products[sale.productId];
-            await update(ref(db, 'products/' + sale.productId), {
-                weight: (product.weight || 0) + (sale.amount || 0)
+
+        // Bestände zurückgeben
+        const byProduct = {};
+        if (sale.items && sale.items.length > 0) {
+            sale.items.forEach(it => {
+                if (!it.productId) return;
+                byProduct[it.productId] = (byProduct[it.productId] || 0) + (it.amount || 0);
             });
+        } else if (sale.productId) {
+            byProduct[sale.productId] = sale.amount || 0;
         }
+
+        const updates = {};
+        Object.entries(byProduct).forEach(([pid, qty]) => {
+            if (!products[pid]) return;
+            const newWeight = (products[pid].weight || 0) + qty;
+            updates['products/' + pid + '/weight'] = newWeight;
+        });
+        if (Object.keys(updates).length > 0) {
+            await update(ref(db), updates);
+        }
+
         await remove(ref(db, 'sales/' + currentEditingSaleId));
         showToast('Verkauf gelöscht');
         closeSaleModal();
     } catch (err) {
         showToast('Fehler beim Löschen', 'error');
     }
-}
-
-// === PRICE AUTO-CALC ===
-function setupPriceAutoCalc() {
-    const productSelect = document.getElementById('saleProduct');
-    productSelect.addEventListener('change', () => {
-        renderTierButtons(productSelect.value);
-    });
 }
 
 // === PRODUCT MODAL mit TIERS ===
@@ -761,11 +960,21 @@ function renderStats() {
 
     const revenue = filteredSales.reduce((sum, s) => sum + (s.price || 0), 0);
 
-    // Wareneinsatz: Menge × costPerGram (entweder gespeicherter Wert oder aktueller)
+    // Wareneinsatz: Items × costPerGram (Multi-Position aware)
     const cost = filteredSales.reduce((sum, s) => {
-        const cpg = s.costPerGram != null ? s.costPerGram :
-                    (s.productId && products[s.productId] ? products[s.productId].costPerGram : 0);
-        return sum + ((cpg || 0) * (s.amount || 0));
+        if (s.items && s.items.length > 0) {
+            // Multi-Position: pro Item
+            return sum + s.items.reduce((itSum, it) => {
+                const cpg = it.costPerGram != null ? it.costPerGram :
+                            (it.productId && products[it.productId] ? products[it.productId].costPerGram : 0);
+                return itSum + ((cpg || 0) * (it.amount || 0));
+            }, 0);
+        } else {
+            // Single-Position (Legacy)
+            const cpg = s.costPerGram != null ? s.costPerGram :
+                        (s.productId && products[s.productId] ? products[s.productId].costPerGram : 0);
+            return sum + ((cpg || 0) * (s.amount || 0));
+        }
     }, 0);
 
     const profit = revenue - cost;
@@ -780,14 +989,25 @@ function renderStats() {
     document.getElementById('statCount').textContent = count;
     document.getElementById('statAvg').textContent = 'Ø ' + fmtMoney(avg);
 
-    // Top Produkte
+    // Top Produkte (Multi-Position aware)
     const productRevenue = {};
     filteredSales.forEach(s => {
-        const key = s.productName || '?';
-        if (!productRevenue[key]) productRevenue[key] = { revenue: 0, amount: 0, count: 0 };
-        productRevenue[key].revenue += s.price || 0;
-        productRevenue[key].amount += s.amount || 0;
-        productRevenue[key].count += 1;
+        if (s.items && s.items.length > 0) {
+            // Multi-Position: jedes Item einzeln zählen
+            s.items.forEach(it => {
+                const key = it.productName || '?';
+                if (!productRevenue[key]) productRevenue[key] = { revenue: 0, amount: 0, count: 0 };
+                productRevenue[key].revenue += it.price || 0;
+                productRevenue[key].amount += it.amount || 0;
+                productRevenue[key].count += 1;
+            });
+        } else {
+            const key = s.productName || '?';
+            if (!productRevenue[key]) productRevenue[key] = { revenue: 0, amount: 0, count: 0 };
+            productRevenue[key].revenue += s.price || 0;
+            productRevenue[key].amount += s.amount || 0;
+            productRevenue[key].count += 1;
+        }
     });
 
     const topProducts = Object.entries(productRevenue)
@@ -909,10 +1129,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('deleteProductBtn').addEventListener('click', handleDeleteProduct);
     document.getElementById('deleteSaleBtn').addEventListener('click', handleDeleteSale);
     document.getElementById('addTierBtn').addEventListener('click', addTierRow);
+    document.getElementById('addPositionBtn').addEventListener('click', addPosition);
     document.getElementById('salesSearch').addEventListener('input', renderAllSales);
 
     setupNavigation();
-    setupPriceAutoCalc();
 
     if (await checkSession()) {
         showApp();
