@@ -17,13 +17,13 @@ import {
 
 // >>> HIER deine Firebase-Konfiguration eintragen (nicht löschen!) <<<
 const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "DEIN_PROJEKT.firebaseapp.com",
-    databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "DEIN_PROJEKT",
-    storageBucket: "DEIN_PROJEKT.appspot.com",
-    messagingSenderId: "DEINE_NUMMER",
-    appId: "DEINE_APP_ID"
+    apiKey: "AIzaSyBJxwo7GKgdHFVIM67FCEUxwC76qCSLhx8",
+    authDomain: "hofladen-9783a.firebaseapp.com",
+    databaseURL: "https://hofladen-9783a-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "hofladen-9783a",
+    storageBucket: "hofladen-9783a.firebasestorage.app",
+    messagingSenderId: "148532523053",
+    appId: "1:148532523053:web:9adf12982d6310702688a4"
 };
 
 const app = initializeApp(firebaseConfig);
