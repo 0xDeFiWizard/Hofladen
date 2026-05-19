@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hofladen-v4';
+const CACHE_NAME = 'hofladen-v5';
 const STATIC_ASSETS = [
     './',
     './index.html',
