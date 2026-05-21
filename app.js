@@ -9,49 +9,20 @@ import {
     update,
     remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import {
-    getAuth,
-    signInAnonymously,
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // >>> HIER deine Firebase-Konfiguration eintragen (nicht löschen!) <<<
 const firebaseConfig = {
-    apiKey: "AIzaSyBJxwo7GKgdHFVIM67FCEUxwC76qCSLhx8",
-    authDomain: "hofladen-9783a.firebaseapp.com",
-    databaseURL: "https://hofladen-9783a-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "hofladen-9783a",
-    storageBucket: "hofladen-9783a.firebasestorage.app",
-    messagingSenderId: "148532523053",
-    appId: "1:148532523053:web:9adf12982d6310702688a4"
+    apiKey: "DEIN_API_KEY",
+    authDomain: "DEIN_PROJEKT.firebaseapp.com",
+    databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "DEIN_PROJEKT",
+    storageBucket: "DEIN_PROJEKT.appspot.com",
+    messagingSenderId: "DEINE_NUMMER",
+    appId: "DEINE_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const auth = getAuth(app);
-
-// Anonyme Anmeldung bei Firebase (im Hintergrund)
-// Sorgt dafür, dass die Datenbank-Regeln auf "auth != null" funktionieren
-let firebaseAuthReady = false;
-let firebaseAuthError = null;
-
-async function ensureFirebaseAuth() {
-    if (firebaseAuthReady) return true;
-    try {
-        await signInAnonymously(auth);
-        firebaseAuthReady = true;
-        return true;
-    } catch (err) {
-        console.error('Firebase Auth Fehler:', err);
-        firebaseAuthError = err;
-        return false;
-    }
-}
-
-// Bei jeder Auth-State-Änderung Flag aktualisieren
-onAuthStateChanged(auth, (user) => {
-    firebaseAuthReady = !!user;
-});
 
 // === PASSWORD ===
 // Standard: "verkauf2025" – siehe README zum Ändern
@@ -149,7 +120,7 @@ async function handleLogin(e) {
             hash,
             expires: Date.now() + SESSION_DURATION
         }));
-        await showApp();
+        showApp();
     } else {
         errorEl.textContent = 'Falsches Passwort';
         document.getElementById('passwordInput').value = '';
@@ -163,18 +134,9 @@ function logout() {
     document.getElementById('passwordInput').value = '';
 }
 
-async function showApp() {
+function showApp() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
-
-    // Erst bei Firebase einloggen, dann Daten laden
-    const authOk = await ensureFirebaseAuth();
-    if (!authOk) {
-        showToast('Verbindung zur Datenbank fehlgeschlagen', 'error');
-        console.error('Auth Fehler:', firebaseAuthError);
-        // Trotzdem App zeigen – evtl. lädt die Auth gleich noch
-    }
-
     initApp();
 }
 
@@ -1173,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupNavigation();
 
     if (await checkSession()) {
-        await showApp();
+        showApp();
     }
 });
 
